@@ -48,15 +48,15 @@ export default function PovDemoSlot() {
   return (
     <div
       id="pov-demo-slot"
-      className="relative flex min-h-[420px] w-full flex-col overflow-hidden rounded-[24px] bg-black"
+      className="relative flex min-h-[440px] w-full flex-col overflow-hidden bg-black ring-1 ring-foreground/10"
     >
       {/* image area */}
       <div className="relative flex flex-1 items-center justify-center">
         <div
-          className="pointer-events-none absolute inset-0 opacity-20"
+          className="pointer-events-none absolute inset-0 opacity-25"
           style={{
             background:
-              "repeating-linear-gradient(0deg, transparent 0 22px, rgba(3,129,254,0.35) 22px 23px), repeating-linear-gradient(90deg, transparent 0 22px, rgba(3,129,254,0.35) 22px 23px)",
+              "repeating-linear-gradient(0deg, transparent 0 22px, rgba(95,207,158,0.30) 22px 23px), repeating-linear-gradient(90deg, transparent 0 22px, rgba(95,207,158,0.30) 22px 23px)",
           }}
         />
         {imgOk ? (
@@ -64,17 +64,20 @@ export default function PovDemoSlot() {
           <img
             key={active.id}
             src={`/pov/tryon-${active.id}.jpg`}
-            alt={`Wearer in concept glasses — ${active.label}`}
+            alt=""
             onError={() => setImgOk(false)}
             className="absolute inset-0 h-full w-full object-cover"
           />
         ) : (
-          <div className="relative flex flex-col items-center gap-2 px-6 text-center">
-            <span className="su-pill">AI try-on</span>
-            <p className="text-sm font-medium text-white/70">
+          <div className="relative flex flex-col items-center gap-2.5 px-6 text-center">
+            <span className="inline-flex items-center gap-1.5 bg-card px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-muted-foreground ring-1 ring-border">
+              <span className="size-1.5 rounded-full bg-brand" />
+              AI try-on
+            </span>
+            <p className="text-xs leading-relaxed text-muted-foreground">
               Generate in ChatGPT with the prompt below, then save as
             </p>
-            <code className="rounded bg-white/10 px-2 py-1 text-xs text-white/80">
+            <code className="bg-secondary px-2 py-1 text-[11px] text-brand ring-1 ring-border">
               /public/pov/tryon-{active.id}.jpg
             </code>
           </div>
@@ -82,7 +85,7 @@ export default function PovDemoSlot() {
       </div>
 
       {/* controls */}
-      <div className="relative z-10 space-y-2 bg-gradient-to-t from-black via-black/85 to-transparent p-3">
+      <div className="relative z-10 space-y-2.5 border-t border-border bg-gradient-to-t from-black via-black/90 to-black/70 p-3">
         <div className="flex flex-wrap gap-1.5">
           {STYLES.map((s) => (
             <button
@@ -91,10 +94,10 @@ export default function PovDemoSlot() {
                 setActive(s);
                 setImgOk(true);
               }}
-              className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+              className={`px-2.5 py-1 text-[11px] transition ${
                 active.id === s.id
-                  ? "bg-su-accent text-white"
-                  : "bg-white/10 text-white/70 hover:bg-white/20"
+                  ? "bg-brand text-brand-foreground"
+                  : "bg-secondary text-muted-foreground ring-1 ring-border hover:text-foreground"
               }`}
             >
               {s.label}
@@ -102,12 +105,12 @@ export default function PovDemoSlot() {
           ))}
         </div>
         <div className="flex items-start gap-2">
-          <p className="line-clamp-2 flex-1 text-[11px] leading-snug text-white/55">
+          <p className="line-clamp-2 flex-1 text-[11px] leading-snug text-muted-foreground">
             {active.prompt}
           </p>
           <button
             onClick={copy}
-            className="shrink-0 rounded-full border border-white/20 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/10"
+            className="shrink-0 bg-secondary px-2.5 py-1 text-[11px] text-foreground ring-1 ring-border transition hover:bg-accent"
           >
             {copied ? "Copied ✓" : "Copy prompt"}
           </button>

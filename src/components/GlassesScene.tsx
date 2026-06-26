@@ -1,44 +1,41 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import {
-  OrbitControls,
-  Environment,
-  ContactShadows,
-  Html,
-  Float,
-} from "@react-three/drei";
+import { OrbitControls, Html, Float, Center } from "@react-three/drei";
 import { useMemo, useState } from "react";
 import * as THREE from "three";
+import { PINS, type Pin } from "./glassesPins";
 
-/* ---- One UI palette (kept in JS so materials match the site) ---- */
-const ACCENT = "#0381fe";
+const ACCENT = "#5fcf9e";
 
-/* Build a Wayfarer-ish lens shape: wider/flatter top, rounded bottom. */
-function lensShape() {
-  const s = new THREE.Shape();
-  const w = 0.92;
-  const h = 0.74;
-  s.moveTo(-w / 2, h / 2);
-  s.lineTo(w / 2, h / 2 - 0.04);
-  s.bezierCurveTo(w / 2 + 0.06, -h / 2 + 0.18, w / 2 - 0.22, -h / 2, 0.04, -h / 2);
-  s.bezierCurveTo(-w / 2 + 0.22, -h / 2, -w / 2 - 0.06, -h / 2 + 0.18, -w / 2, h / 2);
-  return s;
+/* Rounded-rectangle path — the Wayfarer lens silhouette (wider than tall,
+   softly rounded corners). Works for both THREE.Shape and THREE.Path. */
+function roundedRect<T extends THREE.Shape | THREE.Path>(
+  p: T,
+  w: number,
+  h: number,
+  r: number,
+): T {
+  p.moveTo(-w / 2 + r, h / 2);
+  p.lineTo(w / 2 - r, h / 2);
+  p.quadraticCurveTo(w / 2, h / 2, w / 2, h / 2 - r);
+  p.lineTo(w / 2, -h / 2 + r);
+  p.quadraticCurveTo(w / 2, -h / 2, w / 2 - r, -h / 2);
+  p.lineTo(-w / 2 + r, -h / 2);
+  p.quadraticCurveTo(-w / 2, -h / 2, -w / 2, -h / 2 + r);
+  p.lineTo(-w / 2, h / 2 - r);
+  p.quadraticCurveTo(-w / 2, h / 2, -w / 2 + r, h / 2);
+  return p;
 }
 
-/* A flat ring (frame rim) = the lens shape extruded with a slightly smaller hole. */
+function lensShape() {
+  return roundedRect(new THREE.Shape(), 0.96, 0.66, 0.17);
+}
+
+/* Frame rim = lens shape extruded with a smaller concentric hole. */
 function rimGeometry() {
   const outer = lensShape();
-  const inner = lensShape();
-  inner.holes = [];
-  const hole = new THREE.Path();
-  const w = 0.78;
-  const h = 0.6;
-  hole.moveTo(-w / 2, h / 2);
-  hole.lineTo(w / 2, h / 2 - 0.03);
-  hole.bezierCurveTo(w / 2 + 0.05, -h / 2 + 0.15, w / 2 - 0.18, -h / 2, 0.03, -h / 2);
-  hole.bezierCurveTo(-w / 2 + 0.18, -h / 2, -w / 2 - 0.05, -h / 2 + 0.15, -w / 2, h / 2);
-  outer.holes.push(hole);
+  outer.holes.push(roundedRect(new THREE.Path(), 0.78, 0.5, 0.12));
   return new THREE.ExtrudeGeometry(outer, {
     depth: 0.12,
     bevelEnabled: true,
@@ -52,66 +49,23 @@ function rimGeometry() {
 function Temple({ side }: { side: 1 | -1 }) {
   return (
     <group position={[side * 0.98, 0.18, 0]}>
-      {/* hinge block */}
-      <mesh castShadow>
+      <mesh>
         <boxGeometry args={[0.1, 0.16, 0.16]} />
-        <meshStandardMaterial color="#111317" metalness={0.6} roughness={0.35} />
+        <meshStandardMaterial color="#1a1d22" metalness={0.3} roughness={0.5} />
       </mesh>
-      {/* arm going back */}
-      <mesh position={[side * 0.55, 0.02, -0.55]} rotation={[0, side * 0.32, 0]} castShadow>
+      <mesh position={[side * 0.55, 0.02, -0.55]} rotation={[0, side * 0.32, 0]}>
         <boxGeometry args={[1.2, 0.1, 0.07]} />
-        <meshStandardMaterial color="#15171c" metalness={0.4} roughness={0.45} />
+        <meshStandardMaterial color="#202329" metalness={0.2} roughness={0.55} />
       </mesh>
-      {/* ear bend */}
-      <mesh position={[side * 1.08, -0.1, -1.02]} rotation={[0.3, side * 0.32, 0]} castShadow>
+      <mesh position={[side * 1.08, -0.1, -1.02]} rotation={[0.3, side * 0.32, 0]}>
         <boxGeometry args={[0.32, 0.1, 0.07]} />
-        <meshStandardMaterial color="#15171c" metalness={0.4} roughness={0.5} />
+        <meshStandardMaterial color="#202329" metalness={0.2} roughness={0.6} />
       </mesh>
     </group>
   );
 }
 
-type Pin = {
-  id: string;
-  pos: [number, number, number];
-  title: string;
-  body: string;
-};
-
-const PINS: Pin[] = [
-  {
-    id: "lidar",
-    pos: [-1.02, 0.4, 0.12],
-    title: "Solid-state LiDAR",
-    body: "Corner-mounted ToF emitter meshes the room to 5 m — no moving parts, depth on every glance.",
-  },
-  {
-    id: "lens",
-    pos: [0.45, 0.1, 0.16],
-    title: "Waveguide lens",
-    body: "Photochromic lens with a laminated micro-OLED waveguide — 2000-nit display that tints in sunlight.",
-  },
-  {
-    id: "camera",
-    pos: [0, 0.34, 0.18],
-    title: "RGB + depth bridge",
-    body: "Centre camera fuses colour with LiDAR depth so Galaxy AI sees exactly what you see.",
-  },
-  {
-    id: "compute",
-    pos: [1.45, 0.22, -0.5],
-    title: "Neural compute core",
-    body: "On-device Galaxy AI silicon in the temple runs spatial models locally — no cloud round-trip.",
-  },
-  {
-    id: "audio",
-    pos: [-1.5, 0.12, -0.55],
-    title: "Touch + open-ear audio",
-    body: "Capacitive temple control with bone-conduction sound that leaves your ears free.",
-  },
-];
-
-function Callout({ pin, active, onHover }: { pin: Pin; active: boolean; onHover: (id: string | null) => void }) {
+function Marker({ pin, active, onHover }: { pin: Pin; active: boolean; onHover: (id: string | null) => void }) {
   return (
     <group position={pin.pos}>
       <mesh
@@ -121,38 +75,54 @@ function Callout({ pin, active, onHover }: { pin: Pin; active: boolean; onHover:
         }}
         onPointerOut={() => onHover(null)}
       >
-        <sphereGeometry args={[0.045, 16, 16]} />
-        <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={active ? 2.5 : 1.2} />
+        <sphereGeometry args={[0.05, 16, 16]} />
+        <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={active ? 3 : 1.4} />
       </mesh>
-      <Html
-        center
-        distanceFactor={8}
-        occlude={false}
-        zIndexRange={[40, 0]}
-        style={{ pointerEvents: "none", transition: "opacity .2s", opacity: active ? 1 : 0.92 }}
-      >
+      <Html center zIndexRange={[30, 0]} style={{ pointerEvents: "none" }}>
         <div
           style={{
-            transform: `scale(${active ? 1.04 : 1})`,
+            transform: `translate(14px,-14px) scale(${active ? 1.05 : 1})`,
             transition: "transform .15s",
-            width: active ? 200 : "auto",
-            whiteSpace: active ? "normal" : "nowrap",
-            background: "rgba(255,255,255,0.96)",
-            color: "#0a0a0a",
-            border: "1px solid rgba(3,129,254,0.35)",
-            borderRadius: 14,
-            padding: active ? "10px 12px" : "5px 11px",
-            boxShadow: "0 8px 28px rgba(16,24,40,0.18)",
-            fontFamily: "var(--font-geist-sans), system-ui, sans-serif",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
           }}
         >
-          <div style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: "-0.01em", color: ACCENT }}>
-            {pin.title}
-          </div>
+          <span
+            style={{
+              width: 20,
+              height: 20,
+              borderRadius: 999,
+              background: ACCENT,
+              color: "#fff",
+              fontSize: 11,
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 2px 8px rgba(3,129,254,0.5)",
+              fontFamily: "var(--font-geist-sans), system-ui, sans-serif",
+            }}
+          >
+            {pin.n}
+          </span>
           {active && (
-            <div style={{ marginTop: 4, fontSize: 11, lineHeight: 1.45, color: "#5a6172" }}>
-              {pin.body}
-            </div>
+            <span
+              style={{
+                whiteSpace: "nowrap",
+                background: "rgba(255,255,255,0.97)",
+                color: "#0a0a0a",
+                border: `1px solid ${ACCENT}`,
+                borderRadius: 10,
+                padding: "3px 9px",
+                fontSize: 11,
+                fontWeight: 700,
+                boxShadow: "0 6px 20px rgba(16,24,40,0.18)",
+                fontFamily: "var(--font-geist-sans), system-ui, sans-serif",
+              }}
+            >
+              {pin.title}
+            </span>
           )}
         </div>
       </Html>
@@ -160,88 +130,91 @@ function Callout({ pin, active, onHover }: { pin: Pin; active: boolean; onHover:
   );
 }
 
-function Glasses() {
+function Glasses({ onWhite }: { onWhite: boolean }) {
   const rim = useMemo(() => rimGeometry(), []);
-  const lens = useMemo(() => new THREE.ExtrudeGeometry(lensShape(), { depth: 0.03, bevelEnabled: false, curveSegments: 24 }), []);
+  const lens = useMemo(
+    () => new THREE.ExtrudeGeometry(lensShape(), { depth: 0.03, bevelEnabled: false, curveSegments: 24 }),
+    [],
+  );
   const [hover, setHover] = useState<string | null>(null);
 
-  const frameMat = (
-    <meshPhysicalMaterial color="#0c0e12" metalness={0.5} roughness={0.3} clearcoat={0.8} clearcoatRoughness={0.25} />
-  );
-
   return (
-    <group rotation={[0.08, 0, 0]}>
-      {/* Frame rims */}
+    <group rotation={[0.05, 0, 0]}>
       {([-0.98, 0.98] as const).map((x) => (
-        <mesh key={x} geometry={rim} position={[x, 0.18, 0]} castShadow>
-          {frameMat}
+        <mesh key={x} geometry={rim} position={[x, 0.18, 0]}>
+          <meshStandardMaterial color="#16181d" metalness={0.35} roughness={0.4} />
         </mesh>
       ))}
-      {/* Lenses (tinted, slightly transmissive look) */}
       {([-0.98, 0.98] as const).map((x) => (
-        <mesh key={`l${x}`} geometry={lens} position={[x, 0.18, 0.04]}>
-          <meshPhysicalMaterial
-            color="#0a1424"
-            metalness={0}
-            roughness={0.08}
-            transmission={0.55}
-            thickness={0.5}
-            ior={1.5}
+        <mesh key={`l${x}`} geometry={lens} position={[x, 0.18, 0.05]}>
+          <meshStandardMaterial
+            color={onWhite ? "#0a0e16" : "#0d1b30"}
+            metalness={0.1}
+            roughness={0.15}
             transparent
-            opacity={0.82}
+            opacity={onWhite ? 0.92 : 0.78}
           />
         </mesh>
       ))}
-      {/* Bridge */}
-      <mesh position={[0, 0.34, 0.02]} castShadow>
-        <boxGeometry args={[0.42, 0.1, 0.12]} />
-        {frameMat}
+      {/* Solid brow bar — one continuous piece joining both lenses across the top. */}
+      <mesh position={[0, 0.42, 0.02]}>
+        <boxGeometry args={[1.16, 0.18, 0.13]} />
+        <meshStandardMaterial color="#16181d" metalness={0.35} roughness={0.4} />
       </mesh>
-      {/* Camera dot on bridge */}
-      <mesh position={[0, 0.34, 0.1]}>
-        <cylinderGeometry args={[0.045, 0.045, 0.05, 20]} rotation={[Math.PI / 2, 0, 0]} />
-        <meshStandardMaterial color="#05070b" metalness={0.9} roughness={0.1} />
+      {/* Keyhole nose bridge — short dip under the brow, centred. */}
+      <mesh position={[0, 0.26, 0.03]}>
+        <boxGeometry args={[0.34, 0.16, 0.12]} />
+        <meshStandardMaterial color="#16181d" metalness={0.35} roughness={0.4} />
       </mesh>
-      {/* LiDAR accent nub (top-left corner) */}
+      {/* Bridge camera, centred on the brow bar. */}
+      <mesh position={[0, 0.42, 0.11]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.04, 0.04, 0.05, 20]} />
+        <meshStandardMaterial color="#05070b" metalness={0.6} roughness={0.2} />
+      </mesh>
       <mesh position={[-1.42, 0.5, 0.08]}>
         <boxGeometry args={[0.16, 0.1, 0.1]} />
-        <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.4} />
+        <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.6} />
       </mesh>
 
       <Temple side={1} />
       <Temple side={-1} />
 
       {PINS.map((p) => (
-        <Callout key={p.id} pin={p} active={hover === p.id} onHover={setHover} />
+        <Marker key={p.id} pin={p} active={hover === p.id} onHover={setHover} />
       ))}
     </group>
   );
 }
 
-export default function GlassesScene() {
+export default function GlassesScene({
+  background = "dark",
+}: {
+  background?: "dark" | "white";
+}) {
+  const onWhite = background === "white";
   return (
     <Canvas
-      shadows
       dpr={[1, 2]}
-      camera={{ position: [0, 0.3, 4.2], fov: 38 }}
+      camera={{ position: [0, 0.1, 5.3], fov: 42 }}
       gl={{ alpha: true, antialias: true }}
       style={{ width: "100%", height: "100%" }}
     >
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[3, 4, 5]} intensity={1.6} castShadow shadow-mapSize={[1024, 1024]} />
-      <directionalLight position={[-4, 2, -3]} intensity={0.6} color={ACCENT} />
-      <Float speed={1.4} rotationIntensity={0.15} floatIntensity={0.25}>
-        <Glasses />
+      <ambientLight intensity={onWhite ? 1.05 : 0.75} />
+      <directionalLight position={[3, 4, 5]} intensity={onWhite ? 2.4 : 2} />
+      <directionalLight position={[-4, 1, 2]} intensity={onWhite ? 0.35 : 0.9} color={ACCENT} />
+      <directionalLight position={[0, -2, 3]} intensity={0.4} />
+      <Float speed={1.3} rotationIntensity={0.12} floatIntensity={0.2} position={[0, -0.15, 0]}>
+        <Center scale={1.0}>
+          <Glasses onWhite={onWhite} />
+        </Center>
       </Float>
-      <ContactShadows position={[0, -0.9, 0]} opacity={0.35} scale={6} blur={2.6} far={3} />
-      <Environment preset="city" />
       <OrbitControls
         enablePan={false}
         enableZoom={false}
         autoRotate
-        autoRotateSpeed={0.8}
-        minPolarAngle={Math.PI / 2.6}
-        maxPolarAngle={Math.PI / 1.8}
+        autoRotateSpeed={0.7}
+        minPolarAngle={Math.PI / 2.4}
+        maxPolarAngle={Math.PI / 1.9}
       />
     </Canvas>
   );

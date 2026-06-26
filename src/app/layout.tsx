@@ -1,21 +1,24 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, DM_Mono } from "next/font/google";
 import "./globals.css";
 
+/* DM Mono is the NEAT system font (engineered / terminal look). */
+const dmMono = DM_Mono({
+  variable: "--font-dm-mono",
+  subsets: ["latin"],
+  weight: ["300", "400", "500"],
+});
+
+/* Geist is the readable sans used for long-form body copy. */
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "Samsung Insight Day 2026 · Smart Glasses with LiDAR",
+  title: "SAMLens · Samsung Insight Day 2026",
   description:
-    "Insight Day concept presentation: Samsung smart glasses with integrated LiDAR depth sensing.",
+    "SAMLens — Samsung smart glasses that turn the home's existing spatial map into a real-time assistive layer for blind and visually impaired people.",
 };
 
 export default function RootLayout({
@@ -26,9 +29,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`dark ${dmMono.variable} ${geistSans.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col bg-background text-foreground">
+        {children}
+      </body>
     </html>
   );
 }
