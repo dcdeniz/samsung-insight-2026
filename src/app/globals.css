@@ -1,26 +1,105 @@
 @import "tailwindcss";
 
+/* ============================================================
+   Samsung One UI — design tokens
+   Values from the official One UI color system:
+   https://developer.samsung.com/one-ui/color/system.html
+     Primary            #0381fe   (One UI interactive blue)
+     Primary Dark/light #0072de   (deeper blue on light theme)
+     Primary active/dark#3e91ff   (brighter blue on dark theme)
+     Corporate wordmark #1428A0   (Samsung brand blue — logo only)
+   Principle: calm/monotone in large areas, bright accents in small areas.
+   ============================================================ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --su-blue: #1428a0;          /* Samsung corporate blue — wordmark only */
+  --su-accent: #0381fe;        /* One UI Primary (interactive)           */
+  --su-accent-strong: #0072de; /* One UI Primary Dark (light-theme hover)*/
+  --su-accent-soft: #e6f1ff;   /* tinted surface of Primary              */
+  --su-bg: #f7f8fa;            /* One UI light, calm monotone background */
+  --su-surface: #ffffff;
+  --su-surface-2: #f1f3f6;
+  --su-text: #0a0a0a;
+  --su-text-2: #5a6172;
+  --su-line: #e6e9ef;
+  --background: var(--su-bg);
+  --foreground: var(--su-text);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-su-blue: var(--su-blue);
+  --color-su-accent: var(--su-accent);
+  --color-su-surface: var(--su-surface);
+  --color-su-surface-2: var(--su-surface-2);
+  --color-su-text: var(--su-text);
+  --color-su-text-2: var(--su-text-2);
+  --color-su-line: var(--su-line);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --su-bg: #000000;          /* One UI dark = true AMOLED black */
+    --su-surface: #101114;
+    --su-surface-2: #17181c;
+    --su-text: #f4f6fa;
+    --su-text-2: #9aa0ad;
+    --su-line: #25272e;
+    --su-accent: #3e91ff;      /* One UI Primary, dark-theme variant */
+    --su-accent-strong: #3e91ff;
+    --su-accent-soft: #14203a;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* SamsungOne is One UI's universal typeface; Geist is the loaded fallback */
+  font-family: "SamsungOne", "SamsungSharpSans", var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
+
+/* ---- One UI component helpers ---- */
+.su-card {
+  background: var(--su-surface);
+  border: 1px solid var(--su-line);
+  border-radius: 28px; /* One UI loves big radii */
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 28px rgba(16, 24, 40, 0.06);
+}
+
+.su-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  background: var(--su-accent-soft);
+  color: var(--su-accent);
+}
+
+.su-section {
+  width: 100%;
+  max-width: 1180px;
+  margin-inline: auto;
+  padding-inline: clamp(1.25rem, 4vw, 3rem);
+}
+
+.su-gradient-text {
+  background: linear-gradient(100deg, var(--su-blue), var(--su-accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.su-hero-glow {
+  background:
+    radial-gradient(60% 80% at 20% 10%, rgba(44, 124, 246, 0.18), transparent 60%),
+    radial-gradient(50% 70% at 90% 30%, rgba(20, 40, 160, 0.16), transparent 60%);
+}
+
+html { scroll-behavior: smooth; }
